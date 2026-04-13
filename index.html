@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Rotina UFPE — Bruno</title>
+  <style>
+    :root {
+      --bg: #0a0a0f;
+      --surface: #111118;
+      --surface2: #1a1a24;
+      --border: #2a2a3a;
+      --accent: #7c6af7;
+      --accent2: #a78bfa;
+      --green: #34d399;
+      --red: #f87171;
+      --yellow: #fbbf24;
+      --text: #e2e2f0;
+      --muted: #6b6b8a;
+      --radius: 14px;
+      --font: 'Inter', system-ui, sans-serif;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+    /* SIDEBAR */
+    .layout { display: flex; min-height: 100vh; }
+    .sidebar {
+      width: 220px;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      padding: 28px 16px;
+      gap: 6px;
+      position: fixed;
+      top: 0; left: 0; bottom: 0;
+      z-index: 100;
+    }
+    .sidebar-logo {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--accent2);
+      letter-spacing: .04em;
+      padding: 0 8px 20px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 10px;
+    }
+    .sidebar-logo span { color: var(--muted); font-weight: 400; font-size: 11px; display: block; margin-top: 3px; }
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 13.5px;
+      color: var(--muted);
+      transition: all .18s;
+      border: none; background: none; width: 100%; text-align: left;
+    }
+    .nav-item:hover { background: var(--surface2); color: var(--text); }
+    .nav-item.active { background: var(--accent); color: #fff; }
+    .nav-icon { font-size: 16px; width: 20px; text-align: center; }
+    /* MAIN */
+    .main { margin-left: 220px; padding: 32px 36px; flex: 1; }
+    /* PAGES */
+    .page { display: none; }
+    .page.active { display: block; }
+    /* HEADER */
+    .page-header { margin-bottom: 28px; }
+    .page-header h1 { font-size: 22px; font-weight: 700; color: var(--text); }
+    .page-header p { color: var(--muted); font-size: 13px; margin-top: 4px; }
+    /* CARDS GRID */
+    .cards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 18px;
+      margin-bottom: 28px;
+    }
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+    }
+    .card-title {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: var(--muted);
+      margin-bottom: 10px;
+    }
+    .card-value {
+      font-size: 32px;
+      font-weight: 700;
+      color: var(--accent2);
+    }
+    .card-sub { font-size: 12px; color: var(--muted); margin-top: 4px; }
+    /* PROGRESS BAR */
+    .progress-wrap { margin: 10px 0 4px; }
+    .progress-label { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); margin-bottom: 6px; }
+    .progress-bar { height: 6px; background: var(--surface2); border-radius: 99px; overflow: hidden; }
+    .progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); border-radius: 99px; transition: width .4s ease; }
+    /* CHECKLIST */
+    .checklist { display: flex; flex-direction: column; gap: 8px; }
+    .check-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 14px;
+      background: var(--surface2);
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      cursor: pointer;
+      transition: all .15s;
+      user-select: none;
+    }
+    .check-item:hover { border-color: var(--accent); }
+    .check-item.done { opacity: .5; }
+    .check-item.done .check-label { text-decoration: line-through; color: var(--muted); }
+    .check-box {
+      width: 20px; height: 20px;
+      border-radius: 6px;
+      border: 2px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      font-size: 12px;
+      transition: all .15s;
+    }
+    .check-item.done .check-box { background: var(--green); border-color: var(--green); color: #fff; }
+    .check-time { font-size: 11px; color: var(--accent2); font-weight: 600; margin-left: auto; white-space: nowrap; }
+    .check-label { font-size: 13.5px; }
+    .check-tag {
+      font-size: 10px;
+      padding: 2px 8px;
+      border-radius: 99px;
+      font-weight: 600;
+    }
+    .tag-study { background: rgba(124,106,247,.15); color: var(--accent2); }
+    .tag-gym { background: rgba(52,211,153,.12); color: var(--green); }
+    .tag-food { background: rgba(251,191,36,.12); color: var(--yellow); }
+    .tag-transport { background: rgba(248,113,113,.12); color: var(--red); }
+    /* DAY SELECTOR */
+    .day-selector { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
+    .day-btn {
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--muted);
+      transition: all .15s;
+    }
+    .day-btn:hover { border-color: var(--accent); color: var(--text); }
+    .day-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+    /* SECTION */
+    .section-title {
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: var(--muted);
+      margin: 20px 0 10px;
+    }
+    /* POMODORO */
+    .pomodoro-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 24px;
+    }
+    .pomo-ring {
+      position: relative;
+      width: 220px;
+      height: 220px;
+    }
+    .pomo-ring svg { transform: rotate(-90deg); }
+    .pomo-ring circle { fill: none; stroke-width: 10; }
+    .pomo-bg { stroke: var(--surface2); }
+    .pomo-progress { stroke: var(--accent); stroke-linecap: round; transition: stroke-dashoffset .5s linear; }
+    .pomo-center {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+    }
+    .pomo-time { font-size: 40px; font-weight: 700; color: var(--text); letter-spacing: -.02em; }
+    .pomo-mode { font-size: 12px; color: var(--accent2); font-weight: 600; margin-top: 2px; }
+    .pomo-controls { display: flex; gap: 12px; align-items: center; }
+    .btn {
+      padding: 10px 22px;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: all .15s;
+    }
+    .btn-primary { background: var(--accent); color: #fff; }
+    .btn-primary:hover { background: var(--accent2); }
+    .btn-ghost {
+      background: var(--surface2);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+    .btn-ghost:hover { border-color: var(--accent); }
+    .pomo-stats { display: flex; gap: 24px; }
+    .pomo-stat { text-align: center; }
+    .pomo-stat-val { font-size: 22px; font-weight: 700; color: var(--accent2); }
+    .pomo-stat-label { font-size: 11px; color: var(--muted); }
+    .pomo-config { display: flex; gap: 16px; }
+    .pomo-config-item { display: flex; flex-direction: column; gap: 4px; }
+    .pomo-config-item label { font-size: 11px; color: var(--muted); }
+    .pomo-config-item input {
+      width: 70px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-size: 14px;
+      padding: 6px 10px;
+      text-align: center;
+    }
+    /* WORKOUT */
+    .workout-coming {
+      background: var(--surface);
+      border: 1px dashed var(--border);
+      border-radius: var(--radius);
+      padding: 48px 32px;
+      text-align: center;
+      color: var(--muted);
+    }
+    .workout-coming .icon { font-size: 48px; margin-bottom: 16px; }
+    .workout-coming h2 { font-size: 18px; color: var(--text); margin-bottom: 8px; }
+    .workout-coming p { font-size: 13px; line-height: 1.6; }
+    /* WEEKLY VIEW */
+    .week-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 12px;
+    }
+    .week-day-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px;
+    }
+    .week-day-card.today { border-color: var(--accent); }
+    .week-day-name {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: var(--accent2);
+      margin-bottom: 10px;
+    }
+    .week-block {
+      font-size: 11px;
+      padding: 5px 8px;
+      border-radius: 6px;
+      margin-bottom: 5px;
+      line-height: 1.4;
+    }
+    .wb-study { background: rgba(124,106,247,.12); color: var(--accent2); }
+    .wb-gym { background: rgba(52,211,153,.1); color: var(--green); }
+    .wb-free { background: rgba(251,191,36,.08); color: var(--yellow); }
+    /* STATS */
+    .stat-row { display: flex; gap: 16px; margin-bottom: 16px; flex-wrap: wrap; }
+    .stat-mini {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px 18px;
+      min-width: 140px;
+    }
+    .stat-mini-val { font-size: 24px; font-weight: 700; color: var(--accent2); }
+    .stat-mini-label { font-size: 11px; color: var(--muted); margin-top: 2px; }
+    /* HEATMAP */
+    .heatmap { display: flex; flex-direction: column; gap: 6px; }
+    .heatmap-row { display: flex; gap: 4px; align-items: center; }
+    .hm-label { font-size: 10px; color: var(--muted); width: 24px; flex-shrink: 0; }
+    .hm-cell {
+      width: 18px; height: 18px;
+      border-radius: 4px;
+      background: var(--surface2);
+      cursor: pointer;
+      transition: transform .1s;
+    }
+    .hm-cell:hover { transform: scale(1.2); }
+    .hm-0 { background: var(--surface2); }
+    .hm-1 { background: rgba(124,106,247,.25); }
+    .hm-2 { background: rgba(124,106,247,.5); }
+    .hm-3 { background: rgba(124,106,247,.75); }
+    .hm-4 { background: var(--accent); }
+    /* TOAST */
+    .toast {
+      position: fixed;
+      bottom: 24px; right: 24px;
+      background: var(--accent);
+      color: #fff;
+      padding: 12px 20px;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 600;
+      transform: translateY(80px);
+      opacity: 0;
+      transition: all .3s;
+      z-index: 9999;
+    }
+    .toast.show { transform: translateY(0); opacity: 1; }
+    /* SCROLLBAR */
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 99px; }
+    /* RESPONSIVE */
+    @media (max-width: 768px) {
+      .sidebar { width: 100%; height: 60px; flex-direction: row; bottom: 0; top: auto; border-right: none; border-top: 1px solid var(--border); padding: 0 12px; justify-content: space-around; }
+      .sidebar-logo { display: none; }
+      .nav-item { flex-direction: column; gap: 2px; font-size: 10px; padding: 6px 8px; }
+      .nav-icon { font-size: 20px; }
+      .main { margin-left: 0; margin-bottom: 70px; padding: 20px 16px; }
+      .week-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+  </style>
+</head>
+<body>
+<div class="layout">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      Rotina UFPE
+      <span>Bruno · Eng. Computação</span>
+    </div>
+    <button class="nav-item active" onclick="goTo('dashboard')" id="nav-dashboard">
+      <span class="nav-icon">🏠</span> Dashboard
+    </button>
+    <button class="nav-item" onclick="goTo('rotina')" id="nav-rotina">
+      <span class="nav-icon">📋</span> Rotina Diária
+    </button>
+    <button class="nav-item" onclick="goTo('semana')" id="nav-semana">
+      <span class="nav-icon">📅</span> Semana
+    </button>
+    <button class="nav-item" onclick="goTo('pomodoro')" id="nav-pomodoro">
+      <span class="nav-icon">⏱️</span> Pomodoro
+    </button>
+    <button class="nav-item" onclick="goTo('treinos')" id="nav-treinos">
+      <span class="nav-icon">🏋️</span> Treinos
+    </button>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+
+    <!-- DASHBOARD -->
+    <div class="page active" id="page-dashboard">
+      <div class="page-header">
+        <h1>Bom dia, Bruno 👋</h1>
+        <p id="dashboard-date">Carregando data...</p>
+      </div>
+      <div class="cards-grid">
+        <div class="card">
+          <div class="card-title">Tarefas Hoje</div>
+          <div class="card-value" id="stat-done">0/0</div>
+          <div class="progress-wrap">
+            <div class="progress-bar"><div class="progress-fill" id="prog-today" style="width:0%"></div></div>
+          </div>
+          <div class="card-sub">Checklist diário</div>
+        </div>
+        <div class="card">
+          <div class="card-title">Semana Atual</div>
+          <div class="card-value" id="stat-week">0%</div>
+          <div class="progress-wrap">
+            <div class="progress-bar"><div class="progress-fill" id="prog-week" style="width:0%"></div></div>
+          </div>
+          <div class="card-sub">Média de conclusão</div>
+        </div>
+        <div class="card">
+          <div class="card-title">Pomodoros Hoje</div>
+          <div class="card-value" id="stat-pomo">0</div>
+          <div class="card-sub">×25 min de foco</div>
+        </div>
+      </div>
+      <div class="section-title">Consistência — Últimas 4 Semanas</div>
+      <div class="card" style="padding:20px;">
+        <div id="heatmap-container"></div>
+      </div>
+    </div>
+
+    <!-- ROTINA DIÁRIA -->
+    <div class="page" id="page-rotina">
+      <div class="page-header">
+        <h1>📋 Rotina Diária</h1>
+        <p>Marque as tarefas conforme avança no dia.</p>
+      </div>
+      <div class="day-selector" id="day-selector"></div>
+      <div id="checklist-container"></div>
+    </div>
+
+    <!-- SEMANA -->
+    <div class="page" id="page-semana">
+      <div class="page-header">
+        <h1>📅 Visão Semanal</h1>
+        <p>Segunda a Sexta — Grade de aulas e blocos</p>
+      </div>
+      <div class="week-grid" id="week-grid"></div>
+    </div>
+
+    <!-- POMODORO -->
+    <div class="page" id="page-pomodoro">
+      <div class="page-header">
+        <h1>⏱️ Pomodoro</h1>
+        <p>Foco total. Descanse com intenção.</p>
+      </div>
+      <div class="card" style="max-width:460px; margin: 0 auto;">
+        <div class="pomodoro-wrap">
+          <div class="pomo-config">
+            <div class="pomo-config-item">
+              <label>Foco (min)</label>
+              <input type="number" id="cfg-focus" value="25" min="1" max="90" onchange="resetPomo()">
+            </div>
+            <div class="pomo-config-item">
+              <label>Pausa Curta</label>
+              <input type="number" id="cfg-short" value="5" min="1" max="30" onchange="resetPomo()">
+            </div>
+            <div class="pomo-config-item">
+              <label>Pausa Longa</label>
+              <input type="number" id="cfg-long" value="15" min="1" max="60" onchange="resetPomo()">
+            </div>
+          </div>
+          <div class="pomo-ring">
+            <svg width="220" height="220" viewBox="0 0 220 220">
+              <circle class="pomo-bg" cx="110" cy="110" r="95"/>
+              <circle class="pomo-progress" id="pomo-ring" cx="110" cy="110" r="95"
+                stroke-dasharray="596.9" stroke-dashoffset="0"/>
+            </svg>
+            <div class="pomo-center">
+              <div class="pomo-time" id="pomo-display">25:00</div>
+              <div class="pomo-mode" id="pomo-label">FOCO</div>
+            </div>
+          </div>
+          <div class="pomo-controls">
+            <button class="btn btn-ghost" onclick="resetPomo()">↺ Reset</button>
+            <button class="btn btn-primary" id="pomo-btn" onclick="togglePomo()">▶ Iniciar</button>
+            <button class="btn btn-ghost" onclick="skipPomo()">⏭ Skip</button>
+          </div>
+          <div class="pomo-stats">
+            <div class="pomo-stat">
+              <div class="pomo-stat-val" id="pomo-count">0</div>
+              <div class="pomo-stat-label">Pomodoros</div>
+            </div>
+            <div class="pomo-stat">
+              <div class="pomo-stat-val" id="pomo-total-min">0</div>
+              <div class="pomo-stat-label">Min de foco</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TREINOS -->
+    <div class="page" id="page-treinos">
+      <div class="page-header">
+        <h1>🏋️ Treinos</h1>
+        <p>Sessões de academia — em breve</p>
+      </div>
+      <div class="workout-coming">
+        <div class="icon">🏗️</div>
+        <h2>Seção de Treinos</h2>
+        <p>Esta seção está reservada para implementação futura.<br>Aqui você poderá registrar treinos, séries, cargas e evolução corporal.</p>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── DATA ────────────────────────────────────────────────────────────
+const DAYS = ['Segunda','Terça','Quarta','Quinta','Sexta'];
+
+const SCHEDULE = {
+  'Segunda': [
+    { time:'05:50', label:'Despertar — Hidratação + Luz', tag:'gym' },
+    { time:'06:00', label:'Academia (50 min)', tag:'gym' },
+    { time:'07:00', label:'Higiene + Café da Manhã', tag:'food' },
+    { time:'07:30', label:'Deslocamento Boa Vista → UFPE (input passivo)', tag:'transport' },
+    { time:'08:00', label:'Deep Work — Biblioteca (listas de exercícios)', tag:'study' },
+    { time:'10:00', label:'Aula: Cálculo 1', tag:'study' },
+    { time:'12:00', label:'Almoço (RU ou arredores)', tag:'food' },
+    { time:'13:00', label:'Aula: Fundamentos de Programação Imperativa', tag:'study' },
+    { time:'15:00', label:'Laboratório de Programação 2', tag:'study' },
+    { time:'17:00', label:'Retorno para Boa Vista', tag:'transport' },
+  ],
+  'Terça': [
+    { time:'05:50', label:'Despertar — Hidratação + Luz', tag:'gym' },
+    { time:'06:00', label:'Academia (50 min)', tag:'gym' },
+    { time:'07:00', label:'Higiene + Café da Manhã', tag:'food' },
+    { time:'07:30', label:'Deslocamento (2 ônibus)', tag:'transport' },
+    { time:'08:00', label:'Aula: Geometria Analítica 1', tag:'study' },
+    { time:'10:00', label:'Aula: Cálculo 1', tag:'study' },
+    { time:'12:00', label:'Almoço (RU)', tag:'food' },
+    { time:'13:00', label:'Aula: Org. e Arq. de Computadores', tag:'study' },
+    { time:'15:00', label:'Aula: CIN0012 (Lab/Teoria)', tag:'study' },
+    { time:'17:00', label:'Retorno para Boa Vista (1 ônibus)', tag:'transport' },
+  ],
+  'Quarta': [
+    { time:'05:50', label:'Despertar — Hidratação + Luz', tag:'gym' },
+    { time:'06:00', label:'Academia (50 min)', tag:'gym' },
+    { time:'07:00', label:'Higiene + Café da Manhã', tag:'food' },
+    { time:'08:00', label:'Projetos de Programação (manhã livre)', tag:'study' },
+    { time:'12:00', label:'Almoço', tag:'food' },
+    { time:'13:00', label:'Continuar Projetos', tag:'study' },
+    { time:'15:00', label:'Aula: Fund. de Programação Imperativa', tag:'study' },
+    { time:'17:00', label:'Retorno / Descanso', tag:'transport' },
+  ],
+  'Quinta': [
+    { time:'05:50', label:'Despertar — Hidratação + Luz', tag:'gym' },
+    { time:'06:00', label:'Academia (50 min)', tag:'gym' },
+    { time:'07:00', label:'Higiene + Café da Manhã', tag:'food' },
+    { time:'07:30', label:'Deslocamento (2 ônibus)', tag:'transport' },
+    { time:'08:00', label:'Aula: Cálculo 1', tag:'study' },
+    { time:'10:00', label:'Aula: Geometria Analítica 1', tag:'study' },
+    { time:'12:00', label:'Almoço (RU)', tag:'food' },
+    { time:'13:00', label:'Intervalo / Estudo no CIn', tag:'study' },
+    { time:'15:00', label:'Aula: CIN0011 (Lab/Teoria)', tag:'study' },
+    { time:'17:00', label:'Retorno para Boa Vista (1 ônibus)', tag:'transport' },
+  ],
+  'Sexta': [
+    { time:'05:50', label:'Despertar — Hidratação + Luz', tag:'gym' },
+    { time:'06:00', label:'Academia (50 min)', tag:'gym' },
+    { time:'07:00', label:'Higiene + Café da Manhã', tag:'food' },
+    { time:'08:00', label:'Estudos remotos / Descanso mental', tag:'study' },
+    { time:'12:00', label:'Almoço', tag:'food' },
+    { time:'15:30', label:'Deslocamento para UFPE', tag:'transport' },
+    { time:'17:00', label:'Aula: Língua Inglesa Instrumental 1', tag:'study' },
+  ],
+};
+
+const WEEK_BLOCKS = {
+  'Segunda': [
+    { label:'Deep Work', type:'study' },
+    { label:'Cálculo 1', type:'study' },
+    { label:'Fund. Prog.', type:'study' },
+    { label:'Lab Prog 2', type:'study' },
+  ],
+  'Terça': [
+    { label:'Geom. Analítica', type:'study' },
+    { label:'Cálculo 1', type:'study' },
+    { label:'Org. Arq. Comp.', type:'study' },
+    { label:'CIN0012', type:'study' },
+  ],
+  'Quarta': [
+    { label:'Projetos Livres', type:'free' },
+    { label:'Fund. Prog. Imp.', type:'study' },
+  ],
+  'Quinta': [
+    { label:'Cálculo 1', type:'study' },
+    { label:'Geom. Analítica', type:'study' },
+    { label:'CIN0011', type:'study' },
+  ],
+  'Sexta': [
+    { label:'Estudos Remotos', type:'free' },
+    { label:'Inglês Instr.', type:'study' },
+  ],
+};
+
+// ── STATE ────────────────────────────────────────────────────────────
+let state = JSON.parse(localStorage.getItem('routineState') || '{}');
+// state[day][index] = true/false
+let pomoCount = parseInt(localStorage.getItem('pomoCount') || '0');
+let pomoMin   = parseInt(localStorage.getItem('pomoMin') || '0');
+
+const todayIdx = [1,2,3,4,5].includes(new Date().getDay()) ? new Date().getDay()-1 : 0;
+let currentDay = DAYS[todayIdx];
+
+function saveState() { localStorage.setItem('routineState', JSON.stringify(state)); }
+
+// ── NAV ─────────────────────────────────────────────────────────────
+function goTo(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  document.getElementById('nav-'+id).classList.add('active');
+  if(id==='dashboard') updateDashboard();
+}
+
+// ── TOAST ────────────────────────────────────────────────────────────
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 2000);
+}
+
+// ── CHECKLIST ────────────────────────────────────────────────────────
+function buildChecklist(day) {
+  if (!state[day]) state[day] = {};
+  const items = SCHEDULE[day];
+  const container = document.getElementById('checklist-container');
+  container.innerHTML = `<div class="checklist">${items.map((item, i) => {
+    const done = state[day][i] || false;
+    return `<div class="check-item ${done?'done':''}" onclick="toggleCheck('${day}',${i})" id="ci-${day}-${i}">
+      <div class="check-box">${done?'✓':''}</div>
+      <span class="check-label">${item.label}</span>
+      <span class="check-tag tag-${item.tag}">${{gym:'💪',study:'📚',food:'🍽️',transport:'🚌'}[item.tag]}</span>
+      <span class="check-time">${item.time}</span>
+    </div>`;
+  }).join('')}</div>`;
+  updateDashboard();
+}
+
+function toggleCheck(day, i) {
+  if (!state[day]) state[day] = {};
+  state[day][i] = !state[day][i];
+  saveState();
+  buildChecklist(day);
+  if (state[day][i]) showToast('✅ Concluído!');
+}
+
+function buildDaySelector() {
+  const sel = document.getElementById('day-selector');
+  sel.innerHTML = DAYS.map(d =>
+    `<button class="day-btn ${d===currentDay?'active':''}" onclick="selectDay('${d}')">${d}</button>`
+  ).join('');
+}
+
+function selectDay(day) {
+  currentDay = day;
+  buildDaySelector();
+  buildChecklist(day);
+}
+
+// ── WEEK VIEW ────────────────────────────────────────────────────────
+function buildWeekGrid() {
+  const grid = document.getElementById('week-grid');
+  const todayName = DAYS[todayIdx];
+  grid.innerHTML = DAYS.map(day => {
+    const blocks = WEEK_BLOCKS[day];
+    return `<div class="week-day-card ${day===todayName?'today':''}">
+      <div class="week-day-name">${day} ${day===todayName?'· hoje':''}</div>
+      <div class="week-block wb-gym">💪 Academia 06:00</div>
+      ${blocks.map(b=>`<div class="week-block wb-${b.type}">${b.label}</div>`).join('')}
+    </div>`;
+  }).join('');
+}
+
+// ── DASHBOARD ────────────────────────────────────────────────────────
+function updateDashboard() {
+  const todayName = DAYS[todayIdx];
+  const items = SCHEDULE[todayName] || [];
+  const st = state[todayName] || {};
+  const done = Object.values(st).filter(Boolean).length;
+  const total = items.length;
+  document.getElementById('stat-done').textContent = `${done}/${total}`;
+  document.getElementById('prog-today').style.width = total ? `${(done/total)*100}%` : '0%';
+
+  // week avg
+  let totalAll=0, doneAll=0;
+  DAYS.forEach(d=>{ const it=SCHEDULE[d]; const s=state[d]||{}; totalAll+=it.length; doneAll+=Object.values(s).filter(Boolean).length; });
+  const pct = totalAll ? Math.round((doneAll/totalAll)*100) : 0;
+  document.getElementById('stat-week').textContent = pct+'%';
+  document.getElementById('prog-week').style.width = pct+'%';
+
+  document.getElementById('stat-pomo').textContent = pomoCount;
+
+  const now = new Date();
+  const opts = {weekday:'long',year:'numeric',month:'long',day:'numeric'};
+  document.getElementById('dashboard-date').textContent = now.toLocaleDateString('pt-BR',opts);
+
+  buildHeatmap();
+}
+
+// ── HEATMAP ──────────────────────────────────────────────────────────
+function buildHeatmap() {
+  const cont = document.getElementById('heatmap-container');
+  const rows = DAYS.map(day => {
+    const items = SCHEDULE[day];
+    const s = state[day] || {};
+    const done = Object.values(s).filter(Boolean).length;
+    const total = items.length;
+    const pct = total ? done/total : 0;
+    const level = pct===0?0:pct<.33?1:pct<.66?2:pct<1?3:4;
+    return { day, done, total, level };
+  });
+  cont.innerHTML = `
+    <div style="font-size:11px;color:var(--muted);margin-bottom:12px;">Progresso por dia da semana</div>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;">
+      ${rows.map(r=>`
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div class="hm-cell hm-${r.level}" title="${r.day}: ${r.done}/${r.total}"></div>
+          <span style="font-size:12px;color:var(--muted);">${r.day} <span style="color:var(--text);">${r.done}/${r.total}</span></span>
+        </div>`).join('')}
+    </div>
+    <div style="display:flex;gap:6px;align-items:center;margin-top:14px;">
+      <span style="font-size:10px;color:var(--muted);">0%</span>
+      ${[0,1,2,3,4].map(l=>`<div class="hm-cell hm-${l}"></div>`).join('')}
+      <span style="font-size:10px;color:var(--muted);">100%</span>
+    </div>
+  `;
+}
+
+// ── POMODORO ─────────────────────────────────────────────────────────
+const MODES = ['focus','short','long'];
+const MODE_LABELS = ['FOCO','PAUSA CURTA','PAUSA LONGA'];
+let pomoMode = 0, pomoTimer = null, pomoRunning = false;
+let pomoLeft = 0, pomoTotal = 0;
+
+const CIRC = 2 * Math.PI * 95;
+
+function getDurations() {
+  return [
+    parseInt(document.getElementById('cfg-focus').value||25) * 60,
+    parseInt(document.getElementById('cfg-short').value||5) * 60,
+    parseInt(document.getElementById('cfg-long').value||15) * 60,
+  ];
+}
+
+function resetPomo() {
+  clearInterval(pomoTimer);
+  pomoRunning = false;
+  document.getElementById('pomo-btn').textContent = '▶ Iniciar';
+  const durations = getDurations();
+  pomoLeft = pomoTotal = durations[pomoMode];
+  updatePomoDisplay();
+}
+
+function updatePomoDisplay() {
+  const m = String(Math.floor(pomoLeft/60)).padStart(2,'0');
+  const s = String(pomoLeft%60).padStart(2,'0');
+  document.getElementById('pomo-display').textContent = `${m}:${s}`;
+  document.getElementById('pomo-label').textContent = MODE_LABELS[pomoMode];
+  const offset = CIRC * (1 - pomoLeft/pomoTotal);
+  document.getElementById('pomo-ring').style.strokeDashoffset = offset;
+  document.title = `${m}:${s} — ${MODE_LABELS[pomoMode]}`;
+}
+
+function togglePomo() {
+  if (pomoRunning) {
+    clearInterval(pomoTimer);
+    pomoRunning = false;
+    document.getElementById('pomo-btn').textContent = '▶ Retomar';
+  } else {
+    if (pomoLeft === 0 || pomoLeft === pomoTotal) {
+      const durations = getDurations();
+      pomoLeft = pomoTotal = durations[pomoMode];
+    }
+    pomoRunning = true;
+    document.getElementById('pomo-btn').textContent = '⏸ Pausar';
+    pomoTimer = setInterval(() => {
+      pomoLeft--;
+      updatePomoDisplay();
+      if (pomoLeft <= 0) {
+        clearInterval(pomoTimer);
+        pomoRunning = false;
+        document.getElementById('pomo-btn').textContent = '▶ Iniciar';
+        if (pomoMode === 0) {
+          pomoCount++;
+          pomoMin += parseInt(document.getElementById('cfg-focus').value||25);
+          localStorage.setItem('pomoCount', pomoCount);
+          localStorage.setItem('pomoMin', pomoMin);
+          document.getElementById('pomo-count').textContent = pomoCount;
+          document.getElementById('pomo-total-min').textContent = pomoMin;
+          document.getElementById('stat-pomo').textContent = pomoCount;
+          showToast('🍅 Pomodoro concluído! +' + document.getElementById('cfg-focus').value + ' min');
+          pomoMode = pomoCount % 4 === 0 ? 2 : 1;
+        } else {
+          showToast('☕ Pausa concluída!');
+          pomoMode = 0;
+        }
+        new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YWoGAACBhYqFbF1fdJivrJBxX1Zjg5yjnYJsWlBWboqipZOAb2BcXW+JnaCTgXBpZGVxi5qblYV4cnFxd4qSk5GIfnl5en+IjoyIhH56en2BiIaFg4B8fH2AhYSEgoB9fX6AhYSFg4B9fX+BhYSEgoB9fX6AhYSEg4F+fn+AhYSDg4F+fn+BhYSDhIJ/f3+ChISChIN/f4CCgwA=').play().catch(()=>{});
+      }
+    }, 1000);
+  }
+}
+
+function skipPomo() {
+  clearInterval(pomoTimer);
+  pomoRunning = false;
+  document.getElementById('pomo-btn').textContent = '▶ Iniciar';
+  if (pomoMode === 0) { pomoMode = pomoCount%4===0?2:1; }
+  else { pomoMode = 0; }
+  const durations = getDurations();
+  pomoLeft = pomoTotal = durations[pomoMode];
+  updatePomoDisplay();
+}
+
+// ── INIT ─────────────────────────────────────────────────────────────
+document.getElementById('pomo-count').textContent = pomoCount;
+document.getElementById('pomo-total-min').textContent = pomoMin;
+buildDaySelector();
+buildChecklist(currentDay);
+buildWeekGrid();
+updateDashboard();
+resetPomo();
+</script>
+</body>
+</html>
